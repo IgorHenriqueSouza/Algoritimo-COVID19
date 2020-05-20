@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19</title>
+</head>
+<body>
+    <div id="container">
+        <table id="tabela"></table>
+        <button id="simular">Simular</button>
+
+
+
+    </div>
+    
+
+    <script>
+        class Pessoa{
+        infectado
+        curado
+        ciclos
+        mortos
+    }
+        var tabela = document.querySelector("#tabela")
+        var btnsimular = document.querySelector("#simular")
+        var matriz = criaMatriz(10)
+        var contpessoas = 40
+        var infectado = 10
+        var listapessoa = []
+        var ciclostotal = 10
+        saudaveis((contpessoas - infectado), matriz)
+        infectados(infectado, matriz)
+        montatabela(matriz)
+
+        
+
+        btnsimular.addEventListener("click", function(event){
+            event.preventDefault() 
+            simular(listapessoa,matriz)
+                
+            
+            
+        })
+
+        function simular (lista){
+            for (let i = 0; i < matriz.length; i++) {
+                for (let i = 0; i < lista.length; i++) {
+                let linha = lista[i][0]
+                let coluna = lista[i][1]
+                matriz[linha][coluna].ciclos = matriz[linha][coluna].ciclos +1
+                if(!matriz[linha][coluna].mortos){
+                    let pessoa = matriz[linha][coluna]
+                    let direcao = geraAleatorio(1,4)
+                    let retorno = movimentaPessoa(pessoa,direcao,linha,coluna)
+                    if (retorno){
+                        listapessoa[i][0] = retorno[0]
+                        listapessoa[i][1] = retorno[1]
+                        matriz[linha][coluna] = null
+                    }
+                    colisoes(retorno?retorno:[linha,coluna])
+                    if(retorno){
+                        if(matriz[retorno[0]][retorno[1]].ciclos > 3 && matriz[retorno[0]][retorno[1]].infectado) {
+                            matriz[retorno[0]][retorno[1]].infectado = null
+                            matriz[retorno[0]][retorno[1]].curado = true
+
+                        }
+                        else if(matriz[retorno[0]][retorno[1]].infectado){
+                            if(geraAleatorio(0,100) >= 80){
+                                matriz[retorno[0]][retorno[1]].infectado = null
+                                matriz[retorno[0]][retorno[1]].mortos = true
+
+                            }
+
+                        }
+
+                    }
+                    else{
+                        if(matriz[linha][coluna].ciclos > 3 && matriz[linha][coluna].infectado) {
+                            matriz[linha][coluna].infectado = null
+                            matriz[linha][coluna].curado = true
+                        }
+                        else if(matriz[linha][coluna].infectado){
+                            if(geraAleatorio(0,100) >= 80){
+                                matriz[linha][coluna].infectado = null
+                                matriz[linha][coluna].mortos = true
+
+                            }
+
+                        }
+                        
+
+
+                    }
+
+                    
+                }    
+
+                
+            }
+                
+            }
+           
+                limpaTabela(tabela)
+                montatabela(matriz)
+                
+                
+
+        }
+        function limpaTabela(tabela){ // Limpa a tabela no HTML
+            while (tabela.firstChild){
+                tabela.removeChild(tabela.firstChild)
+            }
+        }
+        function colisoes(posicao){
+            let l = parseInt(posicao[0],10)
+            let c = parseInt(posicao[1],10)
+            let pessoa = matriz[l][c]
+            if (l > 0 && matriz[l-1][c]){// cima
+                let pessoacima = matriz[l-1][c]
+                if (pessoacima.mortos){
+                    return
+                }
+                if(!pessoa.infectado && pessoacima.infectado && !pessoa.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c].infectado = true
+                    }
+                }
+                if(pessoa.infectado && !pessoacima.infectado && !pessoacima.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l-1][c].infectado = true
+                    }
+                }
+                
+            }
+            if (c < 9 && matriz[l][c+1]){//direitra
+                let pessoadireita = matriz[l][c+1]
+                if (pessoadireita.mortos){
+                    return
+                }
+                if(!pessoa.infectado && pessoadireita.infectado && !pessoa.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c].infectado = true
+                    }
+                }
+                if(pessoa.infectado && !pessoadireita.infectado && !pessoadireita.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c+1].infectado = true
+                    }
+                }
+
+            }
+            if (l < 9 && matriz[l+1][c]){//Baixo
+                let pessoabaixo = matriz[l+1][c]
+                if (pessoabaixo.mortos){
+                    return
+                }
+                if(!pessoa.infectado && pessoabaixo.infectado && !pessoa.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c].infectado = true
+                    }
+                }
+                if(pessoa.infectado && !pessoabaixo.infectado && !pessoabaixo.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l+1][c].infectado = true
+                    }
+                }
+
+            }
+            if (c > 0 && matriz[l][c-1]){//Esquerda
+            let pessoaesquerda = matriz[l][c-1]
+            if (pessoaesquerda.mortos){
+                    return
+                }
+                if(!pessoa.infectado && pessoaesquerda.infectado && !pessoa.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c].infectado = true
+                    }
+                }
+                if(pessoa.infectado && !pessoaesquerda.infectado && !pessoaesquerda.curado){
+                    if(geraAleatorio(0,100) <= 70){
+                        matriz[l][c-1].infectado = true
+                    }
+                }
+
+
+            }
+
+
+
+        }
+        function movimentaPessoa(pessoa,direcao,linha,coluna){
+
+            switch (parseInt(direcao,10)) {
+                case 1: // Cima
+                    let c = parseInt(linha,10)-1
+                    if(linha > 0 && !matriz[c][coluna]){
+                        matriz[c][coluna] = pessoa
+                        return [c,coluna]
+                }
+            break
+            case 2: // Direita
+                let d = parseInt(coluna,10)+1
+                if(coluna < (9) && !matriz[linha][d]){
+                    matriz[linha][d] = pessoa
+                    return [linha,d]
+                }
+            break
+            case 3: // Baixo
+            let b = parseInt(linha,10)+1
+                if(linha < (9) && !matriz[b][coluna]){
+                    matriz[b][coluna] = pessoa
+                    return [b,coluna]
+                }
+            break
+            case 4: // Esquerda
+                let e = parseInt(coluna,10)-1
+                if(coluna > 0 && !matriz[linha][e]){
+                    matriz[linha][e] = pessoa
+                    return [linha,e]
+                }
+            break
+        }
+
+return false // Caso não movimente tenta novamente
+
+}
+
+
+        function saudaveis(quantidade, matriz){
+            for (let i = 0; i < quantidade; i++) {
+                let inserir = false
+            while(!inserir){
+                let linha = geraAleatorio(0, matriz.length-1)
+                let coluna = geraAleatorio(0, matriz.length-1)
+
+                if (matriz[linha][coluna] == null){
+                    matriz[linha][coluna]=(criarpessoas())
+                    listapessoa.push([
+                        linha,coluna                        
+                    ])
+
+                    
+                    inserir = true
+
+                }
+            }
+                              
+    }
+
+        }
+        function criarpessoas(infectados){
+            let pessoa = new Pessoa()
+            pessoa.infectado = infectados?true:false
+            pessoa.curado = null
+            pessoa.ciclos = 0
+            pessoa.mortos = null
+            return pessoa
+
+        }
+
+        function infectados(infectados, matriz){
+            for (let i = 0; i < infectados; i++) {
+                let inserir = false
+            while(!inserir){
+                let linha = geraAleatorio(0, matriz.length-1)
+                let coluna = geraAleatorio(0, matriz.length-1)
+
+                if (matriz[linha][coluna] == null){
+                    matriz[linha][coluna]=(criarpessoas(true))
+                    listapessoa.push([
+                        linha,coluna                        
+                    ])
+                    inserir = true
+
+                }
+            }
+               
+                
+            }
+          
+        }
+
+        function montatd(td){
+            var TD = document.createElement("td")
+            if(td!=null){
+                
+                if(td.infectado){
+                    TD.setAttribute("style", "color:orange")
+                }
+                if(td.curado){
+                    TD.setAttribute("style", "color:green")
+                }
+                 if(td.morto){
+                    TD.setAttribute("style", "color:brown")
+                }
+                
+                
+                TD.textContent = "*" 
+            }
+            return TD
+
+        }
+
+        function montatabela(matriz){
+            for (let l = 0; l < matriz.length; l++) {
+
+            var TR = document.createElement("tr") // Cria a linha da tabela
+
+            for (let c = 0; c < matriz.length; c++) {
+
+            TR.appendChild(montatd(matriz[l][c])) // Insere a célula na linha
+
+}
+
+tabela.appendChild(TR) // Insere a linha na tabela
+
+}
+        }
+
+        function criaMatriz(linhas){ // Monta a matriz vazia
+
+var matriz = new Array()
+
+for (let l = 0; l < linhas; l++) {
+    let col = new Array()
+    for (let c = 0; c < linhas; c++) {
+        col.push(null)
+    }
+    matriz.push(col)
+}
+
+return matriz
+}
+function geraAleatorio(min, max){ // Gera um número aleatório entre 2 números
+    return (Math.random() * (max - min) + min).toFixed(0)
+}
+
+    
+
+
+    </script>
+    
+</body>
+</html>
